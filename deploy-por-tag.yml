@@ -1,0 +1,74 @@
+name: Deploy por Tag
+
+on:
+  push:
+    tags:
+      - 'dev_*'
+      - 'hml_*'
+      - 'prod_*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolver ambiente pela tag
+        id: env
+        shell: bash
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+
+          if [[ "$TAG_NAME" == dev_* ]]; then
+            echo "env=dev" >> $GITHUB_OUTPUT
+            echo "path=C:/apps/projeto/dev" >> $GITHUB_OUTPUT
+          elif [[ "$TAG_NAME" == hml_* ]]; then
+            echo "env=hml" >> $GITHUB_OUTPUT
+            echo "path=C:/apps/projeto/hml" >> $GITHUB_OUTPUT
+          elif [[ "$TAG_NAME" == prod_* ]]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+            echo "path=C:/apps/projeto/prod" >> $GITHUB_OUTPUT
+          else
+            echo "Tag inválida. Abortando deploy."
+            exit 1
+          fi
+
+      # Deploy via SSH (guardar as chaves no bash do github actions)
+      - name: Configurar SSH
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: |
+            ${{ secrets.SSH_KEY_SBYTE }}
+            ${{ secrets.SSH_KEY_METASA_1 }}
+            ${{ secrets.SSH_KEY_METASA_2 }}
+          ssh-private-key-passphrase: ${{ secrets.SSH_PASSPHRASE }} # deve ser a mesma senha para todos
+
+      - name: Executar deploy no servidor final
+        shell: bash
+        env:
+          SSH_SBYTE_USER: ${{ secrets.SSH_USER_SBYTE }}
+          SSH_METASA_USER: ${{ secrets.SSH_USER_METASA }}
+          SERVER_SBYTE: ${{ secrets.HOST_SBYTE }}
+          SERVER_METASA_1: ${{ secrets.HOST_METASA_1 }}
+          SERVER_METASA_2: ${{ secrets.HOST_METASA_2 }} # Servidor final
+          DEPLOY_PATH: ${{ steps.env.outputs.path }}
+        run: |
+          # Cadeia de acesso obrigatória:
+          # SERVER_SBYTE → único ponto de entrada externo
+          # SERVER_METASA_1 → acessível apenas via SERVER_SBYTE
+          # SERVER_METASA_2 → acessível apenas via SERVER_METASA_1
+          JUMP_HOSTS="${SSH_METASA_USER}@${SERVER_SBYTE},${SSH_METASA_USER}@${SERVER_METASA_1}"
+          
+          # Servidor de destino final (onde o deploy será executado)
+          DESTINATION="${SSH_METASA_USER}@${SERVER_METASA_2}"
+          
+          # Comando a executar no servidor final
+          REMOTE_CMD="cd '${DEPLOY_PATH}'; make update"
+          
+          # Executa conexão SSH encadeada (multi-hop)
+          ssh -o StrictHostKeyChecking=no \
+              -J "${JUMP_HOSTS}" \
+              "${DESTINATION}" \
+              "powershell -Command \"${REMOTE_CMD}\""
