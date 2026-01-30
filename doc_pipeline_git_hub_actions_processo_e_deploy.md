@@ -8,65 +8,53 @@ Como publicar novas versões do projeto nos servidores.
 
 Quando você quiser publicar uma nova versão:
 
-1. **Crie uma tag** com o nome do ambiente
-2. **Envie a tag** para o GitHub
-3. **Pronto!** O sistema faz o resto automaticamente
-
-```
-Você cria a tag → GitHub detecta → Deploy acontece sozinho
-```
+1. **Confirme branch atual** para que seja possivel tracking das tags
+2. **Crie uma tag** com o nome do ambiente que deseja atualizar
+3. **Envie a tag** para o GitHub
+4. **Pronto!** O Actions faz o resto.
 
 ---
 
 ## Qual tag usar?
 
-| Ambiente | Tag | Exemplo | Servidor |
+| Ambiente | Tag | Exemplo | Path Final |
 |----------|-----|---------|----------|
-| **Desenvolvimento** | `dev_` + versão | `dev_1.0.0` | `C:\apps\projeto\dev` |
-| **Homologação** | `hml_` + versão | `hml_1.0.0` | `C:\apps\projeto\hml` |
-| **Produção** | `prod_` + versão | `prod_1.0.0` | `C:\apps\projeto\prod` |
+| **Desenvolvimento** | `dev_` + versão | `dev_1.0.0` | `C:\Buildx\Buildx_dev` |
+| **Homologação** | `hml_` + versão | `hml_1.0.0` | `C:\Buildx\Buildx_hml` |
+| **Produção** | `prod_` + versão | `prod_1.0.0` | `C:\Buildx\Buildx_prod` |
 
 ---
 
 ## Passo a passo
 
-### Publicar em DEV
+### Publicar em DEV | HML | PROD
 ```bash
-git tag dev_1.0.0
-git push origin dev_1.0.0
+git branch -v; 
+git tag -a dev_1.0.0 -m "comentario pertinente";
+git push origin dev_1.0.0;
+(ou git push origin --tags)
 ```
 
-### Publicar em Homologação
-```bash
-git tag hml_1.0.0
-git push origin hml_1.0.0
-```
-
-### Publicar em Produção
-```bash
-git tag prod_1.0.0
-git push origin prod_1.0.0
-```
-
-> 💡 **Dica:** Use números de versão que façam sentido (ex: `prod_2.3.1`).
+> **Dica:** Use números de versão que façam sentido (ex: `prod_1.0.9` -> `prod_1.1.0` ).
 
 ---
 
-## O que acontece por trás?
+## Como Logica do pipeline funciona?
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  1. GitHub recebe a tag                                 │
+│  1. GitHub recebe a tag (setando o path final)          │
 │  2. Pipeline conecta nos servidores (via SSH seguro)    │
-│  3. Código é atualizado no servidor correto             │
+│  3. Código é atualizado no servidor final               │
 │  4. Aplicação é reiniciada automaticamente              │
 └─────────────────────────────────────────────────────────┘
 ```
 
-A conexão passa por 3 servidores em cadeia (por segurança):
+A conexão passa pelos 3 servidores em cadeia:
 ```
-Internet → Servidor 1 → Servidor 2 → Servidor Final
+ Internet (Git Actions)→ SINOSBYTE → 201.44.172.227 → uma007s.metasa.com.br
 ```
+> Setar as chaves de ssh com a mesma senha (senha opcional)
 
 ---
 
@@ -81,7 +69,7 @@ Internet → Servidor 1 → Servidor 2 → Servidor Final
 
 ---
 
-## Requisitos (para a equipe de infra)
+## Requisitos (infra)
 
 - OpenSSH ativo nos Windows Servers
 - Chaves SSH configuradas no GitHub (Secrets)
@@ -108,7 +96,7 @@ Internet → Servidor 1 → Servidor 2 → Servidor Final
 ## Resumo
 
 ```
-📦 Quer publicar? → Crie uma tag → Envie pro GitHub → Pronto!
+Quer publicar? → Crie uma tag → Envie pro GitHub → Pronto!
 ```
 
 | Ação | Comando |
@@ -118,6 +106,3 @@ Internet → Servidor 1 → Servidor 2 → Servidor Final
 | Deploy PROD | `git tag prod_X.X.X && git push origin prod_X.X.X` |
 
 ---
-
-> 📝 O arquivo de configuração completo está em `.github/workflows/deploy-por-tag.yml`
-
