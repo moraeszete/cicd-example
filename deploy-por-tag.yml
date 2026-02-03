@@ -60,16 +60,16 @@ jobs:
           DEPLOY_PORT: ${{ steps.env.outputs.PORT }}
         run: |
           # Cadeia de acesso obrigatória:
-          # SERVER_SBYTE → único ponto de entrada externo
-          # SERVER_METASA_1 → acessível apenas via SERVER_SBYTE
-          # SERVER_METASA_2 → acessível apenas via SERVER_METASA_1
+          # SERVER_SBYTE - único ponto de entrada externo
+          # SERVER_METASA_1 - acessível apenas via SERVER_SBYTE
+          # SERVER_METASA_2 - acessível apenas via SERVER_METASA_1
+          
           JUMP_HOSTS="${SSH_SBYTE_USER}@${SERVER_SBYTE},${SSH_METASA_USER}@${SERVER_METASA_1}"
           
-          # Servidor de destino final (onde o deploy será executado)
           DESTINATION="${SSH_METASA_USER}@${SERVER_METASA_2}"
           
           # Comando a executar no servidor final
-          REMOTE_CMD="cd '${DEPLOY_PATH}'; make update"
+          REMOTE_CMD="cd '${DEPLOY_PATH}'; make git_action_update port=${}"
           
           # Executa conexão SSH encadeada (multi-hop)
           ssh -o StrictHostKeyChecking=no \
