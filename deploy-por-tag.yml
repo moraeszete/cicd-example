@@ -69,10 +69,10 @@ jobs:
           DESTINATION="${SSH_METASA_USER}@${SERVER_METASA_2}"
           
           # Comando a executar no servidor final
-          REMOTE_CMD="cd '${DEPLOY_PATH}'; make update && make run-server port=${DEPLOY_PORT}"
+          COMAND="cd '${DEPLOY_PATH}'; venv/Script/activate; git stash; make update; make run-server port=${DEPLOY_PORT}"
           
           # Executa conexão SSH encadeada (multi-hop)
           ssh -o StrictHostKeyChecking=no \
               -J "${JUMP_HOSTS}" \
               "${DESTINATION}" \
-              "powershell -Command \"${REMOTE_CMD}\""
+              "powershell -Command \"${COMAND}\""
