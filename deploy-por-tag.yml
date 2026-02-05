@@ -46,7 +46,6 @@ jobs:
             ${{ secrets.SSH_KEY_SBYTE }}
             ${{ secrets.SSH_KEY_METASA_1 }}
             ${{ secrets.SSH_KEY_METASA_2 }}
-          ssh-private-key-passphrase: ${{ secrets.SSH_PASSPHRASE }} # deve ser a mesma senha para todos
 
       - name: Executar deploy no servidor final
         shell: bash
