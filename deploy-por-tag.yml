@@ -69,7 +69,7 @@ jobs:
           DESTINATION="${SSH_METASA_USER}@${SERVER_METASA_2}"
           
           # Comando a executar no servidor final
-          REMOTE_CMD="cd '${DEPLOY_PATH}'; make update && make run-server port=${}"
+          REMOTE_CMD="cd '${DEPLOY_PATH}'; make update && make run-server port=${DEPLOY_PORT}"
           
           # Executa conexão SSH encadeada (multi-hop)
           ssh -o StrictHostKeyChecking=no \
